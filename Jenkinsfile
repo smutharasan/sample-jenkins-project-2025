@@ -1,5 +1,5 @@
 pipeline {
-  agent { label 'ec2-agent' } // Your EC2 Jenkins agent label
+  agent any // Your EC2 Jenkins agent label
 
   environment {
     TF_VAR_region = 'us-east-1' // Optional: can also pass other variables
