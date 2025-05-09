@@ -1,6 +1,5 @@
 provider "aws" {
   region  = var.aws_region
-  profile = "SupriyaMutharasanTheCloudDeveloper"  # Your named AWS CLI profile
 }
 
 # Get the default VPC
