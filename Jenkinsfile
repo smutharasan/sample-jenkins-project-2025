@@ -1,14 +1,6 @@
 pipeline {
   agent any
 
-  environment {
-    // Uncomment the below lines if not using an IAM instance profile
-    AWS_ACCESS_KEY_ID     = credentials('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = credentials('AWS_SECRET_ACCESS_KEY')
-    
-    TF_VAR_region = 'us-east-1'
-  }
-
   options {
     timestamps()
   }
