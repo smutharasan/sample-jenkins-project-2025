@@ -1,8 +1,12 @@
 pipeline {
-  agent any // Your EC2 Jenkins agent label
+  agent any
 
   environment {
-    TF_VAR_region = 'us-east-1' // Optional: can also pass other variables
+    // Uncomment the below lines if not using an IAM instance profile
+    // AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')
+    // AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+    
+    TF_VAR_region = 'us-east-1'
   }
 
   options {
@@ -10,11 +14,24 @@ pipeline {
   }
 
   stages {
-
     stage('Checkout Code') {
       steps {
         echo "Cloning repository..."
         checkout scm
+      }
+    }
+
+    stage('Verify Terraform Installation') {
+      steps {
+        echo "Checking Terraform version..."
+        sh 'terraform -version'
+      }
+    }
+
+    stage('Terraform Format Check') {
+      steps {
+        echo "Running terraform fmt..."
+        sh 'terraform fmt -check -recursive'
       }
     }
 
@@ -27,45 +44,48 @@ pipeline {
 
     stage('Terraform Validate') {
       steps {
-        echo "Validating Terraform configuration..."
+        echo "Validating Terraform files..."
         sh 'terraform validate'
       }
     }
 
     stage('Terraform Plan') {
       steps {
-        echo "Planning Terraform changes..."
+        echo "Generating execution plan..."
         sh 'terraform plan -out=tfplan'
       }
     }
 
     stage('Approve Apply') {
       steps {
-        input message: 'Apply Terraform changes?'
+        input message: 'Do you want to apply these Terraform changes?'
       }
     }
 
     stage('Terraform Apply') {
       steps {
-        echo "Applying Terraform changes..."
+        echo "Applying infrastructure changes..."
         sh 'terraform apply -auto-approve tfplan'
       }
     }
 
     stage('Terraform Output') {
       steps {
-        echo "Displaying Terraform output..."
+        echo "Displaying Terraform outputs..."
         sh 'terraform output'
       }
     }
   }
 
   post {
-    always {
-      echo "Pipeline complete."
+    success {
+      echo "✅ Terraform pipeline completed successfully."
     }
     failure {
-      echo "Pipeline failed."
+      echo "❌ Pipeline failed. Check logs for details."
+    }
+    always {
+      echo "🧹 Pipeline finished. Cleaning up if necessary."
     }
   }
 }
