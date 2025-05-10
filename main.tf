@@ -67,7 +67,7 @@ resource "aws_instance" "web" {
               yum install -y docker
               systemctl start docker
               usermod -aG docker ec2-user
-              docker run -d -p 80:3000 kimcharli/nodejs-hello-world:latest
+              docker run -d -p 80:3000 -e PORT=3000 kimcharli/nodejs-hello-world:latest
               EOF
 
   tags = {
