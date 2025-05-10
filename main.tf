@@ -7,14 +7,22 @@ data "aws_vpc" "default" {
   default = true
 }
 
-# Get the subnet in us-east-1a from the default VPC
-data "aws_subnet_ids" "default_subnets" {
-  vpc_id = data.aws_vpc.default.id
+# Get all subnets in the default VPC filtered by us-east-1a
+data "aws_subnets" "default_subnets" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+
+  filter {
+    name   = "availability-zone"
+    values = [var.availability_zone]
+  }
 }
 
+# Select the first matching subnet
 data "aws_subnet" "use_this_one" {
-  id = tolist(data.aws_subnet_ids.default_subnets.ids)[0]
-  # Optional: Add filter for availability_zone = us-east-1a if needed
+  id = data.aws_subnets.default_subnets.ids[0]
 }
 
 # Security group for SSH and HTTP
