@@ -1,88 +1,86 @@
 pipeline {
+  agent any
 
   environment {
     TF_VAR_region = 'us-east-1'
   }
 
-  agent any
+  parameters {
+    booleanParam(name: 'APPLY', defaultValue: false, description: 'Check to apply infrastructure')
+    booleanParam(name: 'DESTROY', defaultValue: false, description: 'Check to destroy infrastructure')
+  }
 
   options {
     timestamps()
   }
 
   stages {
-    stage('Checkout Code') {
+
+    stage('Checkout') {
       steps {
-        echo "Cloning repository..."
+        echo 'Cloning repo...'
         checkout scm
-      }
-    }
-
-    stage('Verify Terraform Installation') {
-      steps {
-        echo "Checking Terraform version..."
-        sh 'terraform -version'
-      }
-    }
-
-    stage('Terraform Format Check') {
-      steps {
-        echo "Running terraform fmt..."
-        sh 'terraform fmt -check -recursive'
       }
     }
 
     stage('Terraform Init') {
       steps {
-        echo "Initializing Terraform..."
+        echo 'Initializing Terraform...'
         sh 'terraform init'
       }
     }
 
     stage('Terraform Validate') {
       steps {
-        echo "Validating Terraform files..."
+        echo 'Validating Terraform...'
         sh 'terraform validate'
       }
     }
 
     stage('Terraform Plan') {
       steps {
-        echo "Generating execution plan..."
+        echo 'Generating Terraform plan...'
         sh 'terraform plan -out=tfplan'
       }
     }
 
-    stage('Approve Apply') {
-      steps {
-        input message: 'Do you want to apply these Terraform changes?'
-      }
-    }
-
     stage('Terraform Apply') {
+      when {
+        expression { return params.APPLY == true }
+      }
       steps {
-        echo "Applying infrastructure changes..."
+        input message: 'Proceed to apply Terraform changes?'
         sh 'terraform apply -auto-approve tfplan'
       }
     }
 
-    stage('Terraform Output') {
+    stage('Terraform Destroy') {
+      when {
+        expression { return params.DESTROY == true }
+      }
       steps {
-        echo "Displaying Terraform outputs..."
+        input message: 'Are you sure you want to destroy the infrastructure?'
+        sh 'terraform destroy -auto-approve'
+      }
+    }
+
+    stage('Terraform Output') {
+      when {
+        expression { return params.APPLY == true }
+      }
+      steps {
+        echo 'Terraform Outputs:'
         sh 'terraform output'
       }
     }
   }
 
   post {
-    success {
-      echo "✅ Terraform pipeline completed successfully."
+    always {
+      echo 'Pipeline complete.'
     }
     failure {
-      echo "❌ Pipeline failed. Check logs for details."
-    }
-    always {
-      echo "🧹 Pipeline finished. Cleaning up if necessary."
+      echo 'Pipeline failed.'
     }
   }
 }
